@@ -3,7 +3,8 @@ import { AppConfig } from './modules/app-config.js';
 import { StorageEngine } from './modules/storage-engine.js';
 import { StateStore } from './modules/state-store.js';
 import { DebugModule } from './modules/debug-module.js';
-import { UIRenderer, currentMonthStr } from './modules/ui-renderer.js';
+import { UIRenderer, currentMonthStr, formatCurrency } from './modules/ui-renderer.js';
+import { upsertMonthlyPayment } from './modules/payment-actions.js';
 
 function rerenderCurrentView() {
   UIRenderer.renderView(StateStore.get('currentView') ?? 'dashboard', {
@@ -148,6 +149,74 @@ async function handleAction(action, trigger) {
         UIRenderer.showToast('ลบไม่สำเร็จ', 'error');
       }
       break;
+
+    case 'open-quick-pay-loan': {
+      const room = rooms.find((r) => r.id === trigger.dataset.id);
+      if (room) {
+        UIRenderer.openConfirm(
+          `บันทึกจ่ายค่างวด ${formatCurrency(room.loanMonthlyPayment)} สำหรับห้อง ${room.roomNumber} ใช่ไหมคะ?`,
+          'confirm-quick-pay-loan',
+          room.id,
+          { label: 'ยืนยันจ่ายแล้ว', toneClass: 'text-purple-600' }
+        );
+      }
+      break;
+    }
+
+    case 'confirm-quick-pay-loan': {
+      const room = rooms.find((r) => r.id === trigger.dataset.id);
+      if (!room) break;
+      try {
+        const { record, transactions: nextTransactions } = upsertMonthlyPayment(transactions, {
+          roomId: room.id,
+          type: AppConfig.TRANSACTION_TYPE.LOAN,
+          month: currentMonth,
+          amount: room.loanMonthlyPayment,
+        });
+        await StorageEngine.put(AppConfig.STORES.TRANSACTIONS, record);
+        StateStore.set('transactions', nextTransactions);
+        UIRenderer.closeModal();
+        UIRenderer.showToast('บันทึกจ่ายค่างวดแล้วค่ะ', 'success');
+      } catch (err) {
+        DebugModule.log('error', 'main.confirm-quick-pay-loan', err);
+        UIRenderer.showToast('บันทึกไม่สำเร็จ', 'error');
+      }
+      break;
+    }
+
+    case 'open-quick-pay-rent': {
+      const room = rooms.find((r) => r.id === trigger.dataset.id);
+      if (room) {
+        UIRenderer.openConfirm(
+          `บันทึกรับค่าเช่า ${formatCurrency(room.rentAmount)} สำหรับห้อง ${room.roomNumber} ใช่ไหมคะ?`,
+          'confirm-quick-pay-rent',
+          room.id,
+          { label: 'ยืนยันรับแล้ว', toneClass: 'text-blue-600' }
+        );
+      }
+      break;
+    }
+
+    case 'confirm-quick-pay-rent': {
+      const room = rooms.find((r) => r.id === trigger.dataset.id);
+      if (!room) break;
+      try {
+        const { record, transactions: nextTransactions } = upsertMonthlyPayment(transactions, {
+          roomId: room.id,
+          type: AppConfig.TRANSACTION_TYPE.RENT,
+          month: currentMonth,
+          amount: room.rentAmount,
+        });
+        await StorageEngine.put(AppConfig.STORES.TRANSACTIONS, record);
+        StateStore.set('transactions', nextTransactions);
+        UIRenderer.closeModal();
+        UIRenderer.showToast('บันทึกรับค่าเช่าแล้วค่ะ', 'success');
+      } catch (err) {
+        DebugModule.log('error', 'main.confirm-quick-pay-rent', err);
+        UIRenderer.showToast('บันทึกไม่สำเร็จ', 'error');
+      }
+      break;
+    }
 
     case 'open-tenant-history': {
       const room = rooms.find((r) => r.id === trigger.dataset.id);
