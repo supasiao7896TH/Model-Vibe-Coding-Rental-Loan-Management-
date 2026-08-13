@@ -1,4 +1,4 @@
-/* global lucide */
+/* global lucide, Chart */
 import { AppConfig } from './app-config.js';
 
 const THAI_MONTHS = [
@@ -76,6 +76,22 @@ function sumByType(transactions, type, status = 'paid') {
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
+// สรุปยอดรายรับ/ผ่อน ย้อนหลัง N เดือน (นับรวมเดือนปัจจุบัน) — pure function เทสได้โดยไม่ต้องมี canvas จริง
+export function buildTrendData(transactions, month, monthsBack = 6) {
+  const [year, m] = month.split('-').map(Number);
+  const months = [];
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const d = new Date(year, m - 1 - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  return {
+    labels: months.map((mo) => monthLabel(mo)),
+    rent: months.map((mo) => sumByType(txForMonth(transactions, mo), AppConfig.TRANSACTION_TYPE.RENT)),
+    loan: months.map((mo) => sumByType(txForMonth(transactions, mo), AppConfig.TRANSACTION_TYPE.LOAN)),
+  };
+}
+
 // ---------- View renderers ----------
 
 function isPaidThisMonth(monthTx, roomId, type) {
@@ -129,6 +145,13 @@ function renderDashboard({ rooms, transactions, month }) {
       ${kpiTile({ label: 'ผ่อนธนาคาร', value: formatCurrency(totalLoan), iconName: 'landmark', accent: { border: 'border-t-purple-500', text: 'text-purple-600', chipBg: 'bg-purple-50' } })}
       ${kpiTile({ label: 'ค่าใช้จ่าย', value: formatCurrency(totalExpense), iconName: 'wrench', accent: { border: 'border-t-amber-500', text: 'text-amber-600', chipBg: 'bg-amber-50' } })}
       ${kpiTile({ label: 'กำไรสุทธิ', value: formatCurrency(net), iconName: 'trending-up', accent: netAccent })}
+    </div>
+
+    <div class="tactile p-4 mb-6">
+      <h3 class="text-sm font-bold mb-2">แนวโน้มย้อนหลัง 6 เดือน</h3>
+      <div class="relative h-56">
+        <canvas id="trendChart"></canvas>
+      </div>
     </div>
 
     <h3 class="text-sm font-bold mb-2 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">${icon('triangle-alert', 'w-4 h-4 text-amber-500')} ใกล้ครบกำหนด</h3>
@@ -336,6 +359,10 @@ function confirmDeleteHtml(message, confirmAction, confirmId) {
 
 // ---------- DOM-touching API ----------
 
+// เก็บ instance ของกราฟไว้นอก UIRenderer — ต้อง .destroy() ก่อนสร้างใหม่ทุกครั้ง
+// ไม่งั้น canvas เดิม (ที่ถูกลบไปแล้วตอน innerHTML เปลี่ยน) จะยังค้างอยู่ใน memory (leak)
+let trendChartInstance = null;
+
 export const UIRenderer = {
   renderView(viewName, data) {
     const container = document.getElementById('viewContainer');
@@ -347,6 +374,41 @@ export const UIRenderer = {
     };
     container.innerHTML = (renderers[viewName] ?? renderDashboard)(data);
     lucide.createIcons(); // แปลง <i data-lucide="..."> ที่เพิ่งใส่เข้าไปให้กลายเป็น SVG จริง
+
+    if (viewName === 'dashboard') {
+      this.renderTrendChart(data.transactions, data.month);
+    }
+  },
+
+  renderTrendChart(transactions, month) {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas) return;
+
+    if (trendChartInstance) {
+      trendChartInstance.destroy();
+    }
+
+    const { labels, rent, loan } = buildTrendData(transactions, month);
+    trendChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'รายรับ (ค่าเช่า)', data: rent, backgroundColor: '#0d9488', borderRadius: 4 },
+          { label: 'ผ่อนธนาคาร', data: loan, backgroundColor: '#9333ea', borderRadius: 4 },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: (v) => formatCurrency(v) } },
+        },
+      },
+    });
   },
 
   openRoomForm(room) {
