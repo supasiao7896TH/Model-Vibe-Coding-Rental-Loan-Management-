@@ -1,0 +1,22 @@
+{
+  "name": "condo-rental-app",
+  "account_id": "e87e6b4e7ec59834a35db192e7e37eb8",
+  "compatibility_date": "2026-08-13",
+  "assets": {
+    // ต่างจากตัวอย่างมาตรฐานของ skill (ที่ชี้ "./" เพราะเป็น single HTML file) —
+    // โปรเจกต์นี้เป็น Vite build ต้องชี้ไปที่โฟลเดอร์ output "dist/" แทน root
+    // ผลคือไม่ต้องมี .assetsignore เลย เพราะ node_modules อยู่นอก dist/ อยู่แล้ว
+    "directory": "./dist"
+  },
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": { "enabled": false, "persist": true, "head_sampling_rate": 1 }
+  }
+}
