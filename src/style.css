@@ -1,2 +1,108 @@
-/* Tailwind CDN คุมสไตล์หลักเกือบทั้งหมดผ่าน utility class ใน HTML/template string แล้ว
-   ไฟล์นี้เหลือไว้เผื่อ custom CSS เล็กๆ ที่ Tailwind utility ทำไม่ได้ (ตอนนี้ยังไม่มี) */
+/* Control Room design tokens — ดู C:\Users\PC 4000D\.claude\skills\vibe-coding-core\references\design-system.md
+   Tailwind CDN คุม layout/spacing ผ่าน utility class ใน template string อยู่แล้ว
+   ไฟล์นี้เก็บเฉพาะสิ่งที่ Tailwind utility ทำเองไม่ได้: CSS variables, .panel, .lamp, gauge rail */
+
+:root {
+  --panel-ink: #0B0E11;
+  --panel-surface: #14181D;
+  --panel-raised: #1C2128;
+  --paper: #F6F5F1;
+  --paper-card: #FFFFFF;
+  --text-primary: #12151A;
+  --text-secondary: #52525B;
+  --text-tertiary: #A1A1AA;
+  --brass: #B87F1F;
+  --border: rgba(0, 0, 0, .08);
+  --lamp-green: #10B981;
+  --lamp-amber: #D97706;
+  --lamp-red: #DC2626;
+  --lamp-blue: #2563EB;
+}
+
+.dark {
+  --text-primary: #F2F3F5;
+  --text-secondary: #9AA3AD;
+  --text-tertiary: #5B6572;
+  --brass: #D9A441;
+  --border: rgba(255, 255, 255, .08);
+  --lamp-green: #34D399;
+  --lamp-amber: #FBBF24;
+  --lamp-red: #F87171;
+  --lamp-blue: #60A5FA;
+}
+
+/* แผงควบคุม — แทนที่ glass การ์ดเดิม ขอบซ้ายติดสว่างสี brass ตอน hover เหมือนไฟ LED */
+.panel {
+  background: var(--paper-card);
+  border: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.dark .panel {
+  background: var(--panel-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+.panel:hover {
+  border-left-color: var(--brass);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .1), -2px 0 12px rgba(184, 127, 31, .15);
+}
+.dark .panel:hover {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .03), -2px 0 12px rgba(217, 164, 65, .18);
+}
+
+/* ไฟสัญญาณ — มี glow เบาๆ เหมือน LED ติดจริง ไม่ใช่จุดสีแบน */
+.lamp {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.lamp-green { background: var(--lamp-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-green) 35%, transparent); }
+.lamp-amber { background: var(--lamp-amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-amber) 35%, transparent); }
+.lamp-red   { background: var(--lamp-red);   box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-red) 35%, transparent); }
+.lamp-blue  { background: var(--lamp-blue);  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-blue) 35%, transparent); animation: pulse-lamp 2s infinite; }
+.lamp-off   { background: var(--text-tertiary); opacity: .5; }
+
+@keyframes pulse-lamp {
+  50% { opacity: .5; }
+}
+
+/* Gauge Rail — ลายเซ็นของแบรนด์ ขีดสเกลแบบไม้บรรทัด/เกจวัด */
+.gauge-rail-vertical {
+  background-image: repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px 8px);
+  background-position: left top;
+  background-repeat: repeat-y;
+  background-size: 1px 40px;
+}
+.gauge-rail-horizontal {
+  background-image: repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px 8px);
+  background-position: left top;
+  background-repeat: repeat-x;
+  background-size: 40px 1px;
+}
+
+/* ตัวเลข/เงิน/วันที่ — อ่านค่าแบบเครื่องมือวัด จัดคอลัมน์ตรงกันเสมอ */
+.data-mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ป้ายทองเหลือง "by Supasit.A" */
+.nameplate {
+  background: var(--paper-card);
+  border: 1px solid var(--brass);
+  color: var(--brass);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
+  transition: box-shadow 200ms ease;
+}
+.dark .nameplate {
+  background: var(--panel-surface);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .4);
+}
+.nameplate:hover {
+  box-shadow: 0 2px 10px rgba(184, 127, 31, .35);
+}
