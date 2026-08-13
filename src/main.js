@@ -192,6 +192,16 @@ document.addEventListener('submit', async (e) => {
   }
 });
 
+// PWA: ลงทะเบียน service worker ให้แอปใช้งาน offline ได้และติดตั้งบนมือถือได้
+// เช็ค 'serviceWorker' in navigator ก่อนเสมอ — เบราว์เซอร์เก่าบางตัวไม่รองรับ
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      DebugModule.log('warn', 'main.serviceWorker.register', err);
+    });
+  });
+}
+
 // type="module" script รันหลัง HTML parse เสร็จเสมอ (เหมือน defer โดยอัตโนมัติ)
 // จึงเรียก init() ตรงๆ ได้เลย ไม่ต้องรอ DOMContentLoaded แบบ script ธรรมดาสมัยก่อน
 init();

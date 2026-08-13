@@ -1,0 +1,18 @@
+{
+  "name": "คอนโด 4 ห้อง",
+  "short_name": "คอนโด4ห้อง",
+  "description": "จัดการค่าเช่าและยอดผ่อนธนาคารสำหรับคอนโดให้เช่า 4 ห้อง",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef2f9",
+  "theme_color": "#0d9488",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
