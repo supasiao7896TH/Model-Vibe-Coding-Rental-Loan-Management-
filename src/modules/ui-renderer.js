@@ -1,3 +1,4 @@
+/* global lucide */
 import { AppConfig } from './app-config.js';
 
 const THAI_MONTHS = [
@@ -47,18 +48,22 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function icon(name, cls = 'w-5 h-5') {
+  return `<i data-lucide="${name}" class="${cls}"></i>`;
+}
+
+function typeIcon(type) {
+  return { rent: 'home', loan: 'landmark', expense: 'wrench' }[type] ?? 'file-text';
+}
+
 function typeLabel(type) {
   return { rent: 'ค่าเช่า', loan: 'ผ่อนธนาคาร', expense: 'ค่าใช้จ่าย' }[type] ?? type;
 }
 
-function typeIcon(type) {
-  return { rent: '🏠', loan: '🏦', expense: '🔧' }[type] ?? '📄';
-}
-
 function statusBadge(status) {
   return status === 'paid'
-    ? '<span class="px-2 py-0.5 rounded-full text-xs" style="background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--success)">จ่ายแล้ว</span>'
-    : '<span class="px-2 py-0.5 rounded-full text-xs" style="background:color-mix(in srgb, var(--warning) 15%, transparent); color:var(--warning)">ยังไม่จ่าย</span>';
+    ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600">จ่ายแล้ว</span>'
+    : '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600">ยังไม่จ่าย</span>';
 }
 
 function txForMonth(transactions, month) {
@@ -77,15 +82,31 @@ function isPaidThisMonth(monthTx, roomId, type) {
   return monthTx.some((t) => t.roomId === roomId && t.type === type && t.status === 'paid');
 }
 
+// การ์ดสรุปตัวเลขแบบ KPI tile — tactile (นูนจากพื้นผิว) + เส้นขอบบนสี (แก้จุดอ่อน contrast ต่ำของ neumorphism ล้วนๆ) + ไอคอนชิป
+function kpiTile({ label, value, iconName, accent }) {
+  return `
+    <div class="tactile rounded-2xl p-5 flex items-center justify-between border-t-4 ${accent.border} animate-slide-up">
+      <div>
+        <p class="text-xs text-[var(--text-secondary)] font-medium">${label}</p>
+        <p class="text-2xl font-black mt-1 ${accent.text}">${value}</p>
+      </div>
+      <div class="tactile-btn w-11 h-11 ${accent.text} flex items-center justify-center shrink-0">
+        ${icon(iconName, 'w-5 h-5')}
+      </div>
+    </div>
+  `;
+}
+
 function renderDashboard({ rooms, transactions, month }) {
   const monthTx = txForMonth(transactions, month);
   const totalRent = sumByType(monthTx, AppConfig.TRANSACTION_TYPE.RENT);
   const totalLoan = sumByType(monthTx, AppConfig.TRANSACTION_TYPE.LOAN);
   const totalExpense = sumByType(monthTx, AppConfig.TRANSACTION_TYPE.EXPENSE);
   const net = totalRent - totalLoan - totalExpense;
-  const netColor = net >= 0 ? 'var(--success)' : 'var(--danger)';
+  const netAccent = net >= 0
+    ? { border: 'border-t-brand-500', text: 'text-brand-600', chipBg: 'bg-brand-50' }
+    : { border: 'border-t-red-500', text: 'text-red-600', chipBg: 'bg-red-50' };
 
-  // ห้องที่จ่ายแล้วเดือนนี้ ไม่ต้องเตือนซ้ำ — เช็ค isPaidThisMonth ก่อนเสมอ
   const dueList = rooms
     .flatMap((room) => {
       const items = [];
@@ -102,35 +123,24 @@ function renderDashboard({ rooms, transactions, month }) {
     .slice(0, 3);
 
   return `
-    <h2 class="text-lg font-medium mb-4">สรุปเดือน ${monthLabel(month)}</h2>
+    <h2 class="text-lg font-bold mb-4 ">สรุปเดือน ${monthLabel(month)}</h2>
     <div class="grid grid-cols-2 gap-3 mb-6">
-      <div class="glass enter p-4">
-        <p class="text-xs text-[var(--text-secondary)]">รายรับ (ค่าเช่า)</p>
-        <p class="text-lg font-semibold mt-1">${formatCurrency(totalRent)}</p>
-      </div>
-      <div class="glass enter p-4">
-        <p class="text-xs text-[var(--text-secondary)]">ผ่อนธนาคาร</p>
-        <p class="text-lg font-semibold mt-1">${formatCurrency(totalLoan)}</p>
-      </div>
-      <div class="glass enter p-4">
-        <p class="text-xs text-[var(--text-secondary)]">ค่าใช้จ่าย</p>
-        <p class="text-lg font-semibold mt-1">${formatCurrency(totalExpense)}</p>
-      </div>
-      <div class="glass enter p-4">
-        <p class="text-xs text-[var(--text-secondary)]">กำไรสุทธิ</p>
-        <p class="text-lg font-semibold mt-1" style="color:${netColor}">${formatCurrency(net)}</p>
-      </div>
+      ${kpiTile({ label: 'รายรับ (ค่าเช่า)', value: formatCurrency(totalRent), iconName: 'home', accent: { border: 'border-t-blue-500', text: 'text-blue-600', chipBg: 'bg-blue-50' } })}
+      ${kpiTile({ label: 'ผ่อนธนาคาร', value: formatCurrency(totalLoan), iconName: 'landmark', accent: { border: 'border-t-purple-500', text: 'text-purple-600', chipBg: 'bg-purple-50' } })}
+      ${kpiTile({ label: 'ค่าใช้จ่าย', value: formatCurrency(totalExpense), iconName: 'wrench', accent: { border: 'border-t-amber-500', text: 'text-amber-600', chipBg: 'bg-amber-50' } })}
+      ${kpiTile({ label: 'กำไรสุทธิ', value: formatCurrency(net), iconName: 'trending-up', accent: netAccent })}
     </div>
 
-    <h3 class="text-sm font-medium mb-2">⚠️ ใกล้ครบกำหนด</h3>
+    <h3 class="text-sm font-bold mb-2 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">${icon('triangle-alert', 'w-4 h-4 text-amber-500')} ใกล้ครบกำหนด</h3>
     ${dueList.length === 0
       ? '<p class="text-sm text-[var(--text-tertiary)]">ไม่มีรายการใกล้ครบกำหนดค่ะ 🎉</p>'
       : `<ul class="space-y-2">${dueList.map((item) => {
-          const color = item.info.isOverdue ? 'var(--danger)' : 'var(--warning)';
+          const tone = item.info.isOverdue ? 'text-red-600' : 'text-amber-600';
+          const dot = item.info.isOverdue ? 'bg-red-500 pulse-dot' : 'bg-amber-500';
           return `
-          <li class="glass enter flex justify-between items-center px-4 py-2 text-sm">
-            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:${color}"></span>ห้อง ${escapeHtml(item.room.roomNumber)} — ${typeLabel(item.type)}</span>
-            <span class="text-xs font-medium" style="color:${color}">
+          <li class="tactile-sm flex justify-between items-center px-4 py-2.5 text-sm animate-fade-in">
+            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ${dot}"></span>ห้อง ${escapeHtml(item.room.roomNumber)} — ${typeLabel(item.type)}</span>
+            <span class="text-xs font-bold ${tone}">
               ${item.info.isOverdue ? `เลยกำหนด ${Math.abs(item.info.daysUntil)} วัน` : `อีก ${item.info.daysUntil} วัน`}
             </span>
           </li>`;
@@ -142,23 +152,23 @@ function renderRooms({ rooms, transactions, month }) {
   const monthTx = txForMonth(transactions, month);
 
   return `
-    <h2 class="text-lg font-medium mb-4">ห้องพักทั้งหมด</h2>
+    <h2 class="text-lg font-bold mb-4 ">ห้องพักทั้งหมด</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       ${rooms.map((room) => {
         const rentPaid = monthTx.some((t) => t.roomId === room.id && t.type === 'rent' && t.status === 'paid');
         const loanPaid = monthTx.some((t) => t.roomId === room.id && t.type === 'loan' && t.status === 'paid');
         return `
-          <div class="glass enter p-4">
+          <div class="tactile rounded-2xl p-4 animate-slide-up">
             <div class="flex justify-between items-start mb-2">
               <div>
-                <p class="font-medium">ห้อง ${escapeHtml(room.roomNumber)}</p>
+                <p class="font-bold">ห้อง ${escapeHtml(room.roomNumber)}</p>
                 <p class="text-xs text-[var(--text-secondary)]">${room.tenantName ? escapeHtml(room.tenantName) : 'ยังไม่มีผู้เช่า'}</p>
               </div>
-              <button type="button" data-action="edit-room" data-id="${room.id}" class="text-sm text-[var(--brand)]" aria-label="แก้ไขห้อง ${escapeHtml(room.roomNumber)}">แก้ไข</button>
+              <button type="button" data-action="edit-room" data-id="${room.id}" title="แก้ไขห้อง ${escapeHtml(room.roomNumber)}" class="text-sm font-bold text-brand-600 hover:text-brand-700" aria-label="แก้ไขห้อง ${escapeHtml(room.roomNumber)}">แก้ไข</button>
             </div>
             <div class="flex gap-4 text-xs">
-              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:${rentPaid ? 'var(--success)' : 'var(--text-tertiary)'}"></span>เช่า ${formatCurrency(room.rentAmount)}</span>
-              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:${loanPaid ? 'var(--success)' : 'var(--text-tertiary)'}"></span>ผ่อน ${formatCurrency(room.loanMonthlyPayment)}</span>
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${rentPaid ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}"></span>เช่า ${formatCurrency(room.rentAmount)}</span>
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${loanPaid ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}"></span>ผ่อน ${formatCurrency(room.loanMonthlyPayment)}</span>
             </div>
           </div>`;
       }).join('')}
@@ -172,22 +182,25 @@ function renderTransactions({ rooms, transactions }) {
 
   return `
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-medium">ธุรกรรมทั้งหมด</h2>
-      <button type="button" data-action="open-add-transaction" class="btn-press rounded-full bg-[var(--brand)] text-white text-sm px-3 py-1.5">+ เพิ่ม</button>
+      <h2 class="text-lg font-bold ">ธุรกรรมทั้งหมด</h2>
+      <button type="button" data-action="open-add-transaction" class="flex items-center gap-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold px-3 py-2 transition-colors">${icon('plus', 'w-4 h-4')} เพิ่ม</button>
     </div>
     ${sorted.length === 0
       ? '<p class="text-sm text-[var(--text-tertiary)]">ยังไม่มีธุรกรรมเลยค่ะ ลองกด "+ เพิ่ม" ดูนะคะ</p>'
       : `<ul class="space-y-2">${sorted.map((t) => `
-          <li class="glass enter p-3 flex justify-between items-center text-sm">
-            <div>
-              <p>${typeIcon(t.type)} ห้อง ${escapeHtml(roomName(t.roomId))} · ${typeLabel(t.type)} · ${monthLabel(t.month)}</p>
-              <p class="text-xs text-[var(--text-secondary)]">${escapeHtml(t.note || '')}</p>
+          <li class="tactile-sm p-3 flex justify-between items-center text-sm animate-fade-in">
+            <div class="flex items-center gap-2">
+              <div class="w-9 h-9 rounded-lg tactile-btn text-[var(--text-secondary)] flex items-center justify-center shrink-0">${icon(typeIcon(t.type), 'w-4 h-4')}</div>
+              <div>
+                <p class="font-medium">ห้อง ${escapeHtml(roomName(t.roomId))} · ${typeLabel(t.type)} · ${monthLabel(t.month)}</p>
+                <p class="text-xs text-[var(--text-secondary)]">${escapeHtml(t.note || '')}</p>
+              </div>
             </div>
             <div class="flex items-center gap-2">
-              <span class="font-semibold">${formatCurrency(t.amount)}</span>
+              <span class="font-bold">${formatCurrency(t.amount)}</span>
               ${statusBadge(t.status)}
-              <button type="button" data-action="edit-transaction" data-id="${t.id}" aria-label="แก้ไขธุรกรรม">✏️</button>
-              <button type="button" data-action="delete-transaction" data-id="${t.id}" aria-label="ลบธุรกรรม">🗑️</button>
+              <button type="button" data-action="edit-transaction" data-id="${t.id}" title="แก้ไขธุรกรรม" aria-label="แก้ไขธุรกรรม" class="text-slate-400 hover:text-brand-600">${icon('square-pen', 'w-4 h-4')}</button>
+              <button type="button" data-action="delete-transaction" data-id="${t.id}" title="ลบธุรกรรม" aria-label="ลบธุรกรรม" class="text-slate-400 hover:text-red-600">${icon('trash-2', 'w-4 h-4')}</button>
             </div>
           </li>`).join('')}</ul>`}
   `;
@@ -196,7 +209,6 @@ function renderTransactions({ rooms, transactions }) {
 function renderReminders({ rooms, transactions, month }) {
   const monthTx = txForMonth(transactions, month);
 
-  // เหมือนใน renderDashboard — ห้องที่มี transaction สถานะ "จ่ายแล้ว" ของเดือนนี้แล้ว ไม่ต้องเตือนอีก
   const items = rooms
     .flatMap((room) => {
       const list = [];
@@ -212,23 +224,25 @@ function renderReminders({ rooms, transactions, month }) {
 
   if (items.length === 0) {
     return `
-      <h2 class="text-lg font-medium mb-4">แจ้งเตือนครบกำหนด — ${monthLabel(month)}</h2>
+      <h2 class="text-lg font-bold mb-4 ">แจ้งเตือนครบกำหนด — ${monthLabel(month)}</h2>
       <p class="text-sm text-[var(--text-tertiary)]">จ่ายครบทุกรายการของเดือนนี้แล้วค่ะ 🎉</p>
     `;
   }
 
   return `
-    <h2 class="text-lg font-medium mb-4">แจ้งเตือนครบกำหนด — ${monthLabel(month)}</h2>
+    <h2 class="text-lg font-bold mb-4 ">แจ้งเตือนครบกำหนด — ${monthLabel(month)}</h2>
     <ul class="space-y-2">
       ${items.map((item) => {
-        const color = item.info.isOverdue ? 'var(--danger)' : 'var(--warning)';
-        const statusText = item.info.isOverdue
+        const isOverdue = item.info.isOverdue;
+        const border = isOverdue ? 'border-t-red-500' : 'border-t-amber-500';
+        const tone = isOverdue ? 'text-red-600' : 'text-amber-600';
+        const statusText = isOverdue
           ? `เลยกำหนด ${Math.abs(item.info.daysUntil)} วัน`
           : `อีก ${item.info.daysUntil} วัน (วันที่ ${item.room[item.type === 'rent' ? 'rentDueDay' : 'loanDueDay']})`;
         return `
-          <li class="glass enter flex justify-between items-center px-4 py-3 text-sm">
-            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:${color}"></span>${typeIcon(item.type)} ห้อง ${escapeHtml(item.room.roomNumber)} — ${typeLabel(item.type)}</span>
-            <span class="text-xs font-medium" style="color:${color}">${statusText}</span>
+          <li class="tactile-sm border-t-4 ${border} flex justify-between items-center px-4 py-3 text-sm animate-fade-in">
+            <span class="flex items-center gap-2">${icon(typeIcon(item.type), 'w-4 h-4 text-slate-400')}ห้อง ${escapeHtml(item.room.roomNumber)} — ${typeLabel(item.type)}</span>
+            <span class="text-xs font-bold ${tone}">${statusText}</span>
           </li>`;
       }).join('')}
     </ul>
@@ -237,14 +251,14 @@ function renderReminders({ rooms, transactions, month }) {
 
 // ---------- Modal forms ----------
 
-const INPUT_CLASS = 'w-full mt-1 rounded-[10px] border border-[var(--border)] bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]';
-const BTN_PRIMARY = 'btn-press flex-1 rounded-full bg-[var(--brand)] text-white py-2';
-const BTN_SECONDARY = 'btn-press flex-1 rounded-full border border-[var(--border)] py-2';
+const INPUT_CLASS = 'tactile-inset w-full mt-1 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+const BTN_PRIMARY = 'tactile-btn flex-1 text-brand-600 py-2 font-bold';
+const BTN_SECONDARY = 'tactile-btn flex-1 text-[var(--text-secondary)] py-2 font-medium';
 
 function roomFormHtml(room) {
   return `
     <form id="roomForm" data-id="${room.id}" class="space-y-3">
-      <h3 class="font-medium text-lg mb-2">แก้ไขห้อง ${escapeHtml(room.roomNumber)}</h3>
+      <h3 class="font-bold text-lg mb-2">แก้ไขห้อง ${escapeHtml(room.roomNumber)}</h3>
       <label class="block text-sm">ชื่อผู้เช่า
         <input name="tenantName" value="${escapeHtml(room.tenantName || '')}" class="${INPUT_CLASS}" />
       </label>
@@ -272,7 +286,7 @@ function transactionFormHtml(rooms, transaction) {
   const t = transaction ?? { id: '', roomId: rooms[0]?.id, type: 'rent', month: currentMonthStr(), amount: '', status: 'unpaid', note: '' };
   return `
     <form id="transactionForm" data-id="${t.id}" class="space-y-3">
-      <h3 class="font-medium text-lg mb-2">${transaction ? 'แก้ไข' : 'เพิ่ม'}ธุรกรรม</h3>
+      <h3 class="font-bold text-lg mb-2">${transaction ? 'แก้ไข' : 'เพิ่ม'}ธุรกรรม</h3>
       <label class="block text-sm">ห้อง
         <select name="roomId" class="${INPUT_CLASS}">
           ${rooms.map((r) => `<option value="${r.id}" ${r.id === t.roomId ? 'selected' : ''}>ห้อง ${escapeHtml(r.roomNumber)}</option>`).join('')}
@@ -313,7 +327,7 @@ function confirmDeleteHtml(message, confirmAction, confirmId) {
     <div class="space-y-4">
       <p>${escapeHtml(message)}</p>
       <div class="flex gap-2">
-        <button type="button" data-action="${confirmAction}" data-id="${confirmId}" class="btn-press flex-1 rounded-full bg-[var(--danger)] text-white py-2">ลบ</button>
+        <button type="button" data-action="${confirmAction}" data-id="${confirmId}" class="tactile-btn flex-1 text-red-600 py-2 font-bold">ลบ</button>
         <button type="button" data-action="close-modal" class="${BTN_SECONDARY}">ยกเลิก</button>
       </div>
     </div>
@@ -332,6 +346,7 @@ export const UIRenderer = {
       reminders: renderReminders,
     };
     container.innerHTML = (renderers[viewName] ?? renderDashboard)(data);
+    lucide.createIcons(); // แปลง <i data-lucide="..."> ที่เพิ่งใส่เข้าไปให้กลายเป็น SVG จริง
   },
 
   openRoomForm(room) {
@@ -350,7 +365,7 @@ export const UIRenderer = {
     const root = document.getElementById('modalRoot');
     root.innerHTML = `
       <div class="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/40" data-action="close-modal">
-        <div class="glass enter w-full sm:max-w-md p-5 max-h-[90vh] overflow-y-auto !rounded-t-2xl sm:!rounded-2xl">
+        <div class="tactile w-full sm:max-w-md p-5 max-h-[90vh] overflow-y-auto !rounded-t-2xl sm:!rounded-2xl">
           ${contentHtml}
         </div>
       </div>
@@ -363,10 +378,9 @@ export const UIRenderer = {
 
   showToast(message, type = 'info') {
     const root = document.getElementById('toastRoot');
-    const color = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--brand)';
+    const border = type === 'error' ? 'border-t-red-500' : type === 'success' ? 'border-t-emerald-500' : 'border-t-brand-500';
     const el = document.createElement('div');
-    el.className = 'glass enter text-sm rounded-xl px-4 py-2';
-    el.style.borderLeft = `4px solid ${color}`;
+    el.className = `tactile-sm border-t-4 ${border} text-sm px-4 py-2`;
     el.textContent = message; // textContent เสมอ ไม่ใช้ innerHTML กับข้อความที่โผล่ผ่าน parameter
     root.appendChild(el);
     setTimeout(() => el.remove(), 3000);
@@ -375,6 +389,9 @@ export const UIRenderer = {
   applyTheme(theme) {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     const btn = document.getElementById('themeToggleBtn');
-    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    if (btn) {
+      btn.innerHTML = theme === 'dark' ? icon('sun', 'w-5 h-5') : icon('moon', 'w-5 h-5');
+      lucide.createIcons();
+    }
   },
 };

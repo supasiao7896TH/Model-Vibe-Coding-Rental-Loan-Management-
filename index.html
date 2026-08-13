@@ -15,52 +15,72 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>คอนโด 4 ห้อง | by Supasit.A</title>
 
-    <!-- Tailwind CDN: เร็ว ไม่ต้อง build แยก แลกกับ style-src ต้องเปิด 'unsafe-inline' (ดู comment ใน CSP ด้านบน) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/tailwind-config.js"></script>
+    <!-- Lucide vendored ในเครื่อง (ไม่ใช้ CDN) — CSP-friendly, offline-first -->
+    <script src="/vendor/lucide.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&family=Fraunces:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
-  <body class="min-h-screen font-['Noto_Sans_Thai'] bg-[var(--bg-page)] text-[var(--text-primary)]">
+  <body class="min-h-screen font-sans bg-[var(--bg-page)] text-[var(--text-primary)]">
     <div class="flex min-h-screen md:flex-row flex-col">
 
       <!-- Sidebar: เห็นเฉพาะจอ >= md (PC/Desktop) -->
-      <aside class="hidden md:flex md:flex-col md:w-20 md:items-center md:py-6 md:gap-6 glass md:!rounded-none border-r border-[var(--border)]">
-        <span class="text-2xl">🏠</span>
-        <nav class="flex flex-col gap-4" id="sidebarNav">
-          <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="Dashboard">📊</button>
-          <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="ห้องพัก">🏘️</button>
-          <button type="button" data-action="switch-view" data-view="transactions" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="ธุรกรรม">📋</button>
-          <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="แจ้งเตือน">🔔</button>
+      <aside class="hidden md:flex md:flex-col md:w-64 bg-[var(--bg-page)] border-r border-black/5 dark:border-white/5">
+        <div class="h-20 flex items-center px-6">
+          <div class="tactile-btn w-10 h-10 flex items-center justify-center text-brand-600">
+            <i data-lucide="home" class="w-5 h-5"></i>
+          </div>
+          <span class="ml-3 font-extrabold text-lg tracking-tight gradient-text">คอนโด4ห้อง</span>
+        </div>
+        <nav class="mt-4 flex flex-col gap-2 px-4" id="sidebarNav">
+          <button type="button" data-action="switch-view" data-view="dashboard" class="nav-btn flex items-center px-4 py-3 text-[var(--text-secondary)] hover:text-brand-600 rounded-xl transition-all font-medium">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="ml-3 text-sm font-bold">Dashboard</span>
+          </button>
+          <button type="button" data-action="switch-view" data-view="rooms" class="nav-btn flex items-center px-4 py-3 text-[var(--text-secondary)] hover:text-brand-600 rounded-xl transition-all font-medium">
+            <i data-lucide="building-2" class="w-5 h-5"></i><span class="ml-3 text-sm font-bold">ห้องพัก</span>
+          </button>
+          <button type="button" data-action="switch-view" data-view="transactions" class="nav-btn flex items-center px-4 py-3 text-[var(--text-secondary)] hover:text-brand-600 rounded-xl transition-all font-medium">
+            <i data-lucide="receipt" class="w-5 h-5"></i><span class="ml-3 text-sm font-bold">ธุรกรรม</span>
+          </button>
+          <button type="button" data-action="switch-view" data-view="reminders" class="nav-btn flex items-center px-4 py-3 text-[var(--text-secondary)] hover:text-brand-600 rounded-xl transition-all font-medium">
+            <i data-lucide="bell" class="w-5 h-5"></i><span class="ml-3 text-sm font-bold">แจ้งเตือน</span>
+          </button>
         </nav>
       </aside>
 
       <div class="flex-1 flex flex-col">
-        <!-- Header: Glass sticky + Fraunces (hero) + Status Indicator -->
-        <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 glass md:!rounded-none border-b border-[var(--border)]">
-          <h1 class="font-['Fraunces'] font-semibold text-lg">🏠 คอนโด 4 ห้อง</h1>
+        <!-- Header -->
+        <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-4">
+          <h1 class="font-extrabold text-xl tracking-tight md:hidden gradient-text">คอนโด4ห้อง</h1>
+          <span class="hidden md:block text-sm text-[var(--text-tertiary)] font-medium">V1.0 · Local-First</span>
           <div class="flex items-center gap-3">
-            <span class="w-2.5 h-2.5 rounded-full bg-[var(--success)] glow-online" title="พร้อมใช้งาน (ข้อมูลอยู่ในเครื่อง)" aria-label="สถานะ: พร้อมใช้งาน"></span>
-            <button type="button" data-action="toggle-theme" id="themeToggleBtn" aria-label="สลับโหมดมืด/สว่าง" class="text-xl btn-press">🌙</button>
+            <span class="w-2 h-2 rounded-full bg-brand-500 pulse-dot" title="พร้อมใช้งาน (ข้อมูลอยู่ในเครื่อง)" aria-label="สถานะ: พร้อมใช้งาน"></span>
+            <button type="button" data-action="toggle-theme" id="themeToggleBtn" aria-label="สลับโหมดมืด/สว่าง" title="สลับโหมดมืด/สว่าง" class="tactile-btn w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:text-brand-600">
+              <i data-lucide="moon" class="w-4 h-4"></i>
+            </button>
           </div>
         </header>
 
         <!-- View container: JS จะ render เนื้อหาของแต่ละหน้าลงตรงนี้ -->
-        <main id="viewContainer" class="flex-1 p-4 pb-24 md:pb-6 max-w-3xl w-full mx-auto"></main>
+        <main id="viewContainer" class="flex-1 p-4 pb-32 md:pb-6 max-w-4xl w-full mx-auto"></main>
       </div>
 
       <!-- Bottom nav: เห็นเฉพาะจอ < md (Mobile) -->
-      <nav class="md:hidden fixed bottom-0 inset-x-0 z-20 flex justify-around items-center py-2 glass !rounded-none border-t border-[var(--border)]">
-        <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="Dashboard">📊</button>
-        <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="ห้องพัก">🏘️</button>
-        <button type="button" data-action="open-add-transaction" class="text-2xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="เพิ่มธุรกรรม">➕</button>
-        <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="แจ้งเตือน">🔔</button>
+      <nav class="md:hidden fixed bottom-14 inset-x-0 z-20 flex justify-around items-center py-2 bg-[var(--bg-page)] border-t border-black/5 dark:border-white/5">
+        <button type="button" data-action="switch-view" data-view="dashboard" aria-label="Dashboard" title="Dashboard" class="nav-btn p-2 rounded-xl text-[var(--text-secondary)]"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></button>
+        <button type="button" data-action="switch-view" data-view="rooms" aria-label="ห้องพัก" title="ห้องพัก" class="nav-btn p-2 rounded-xl text-[var(--text-secondary)]"><i data-lucide="building-2" class="w-5 h-5"></i></button>
+        <button type="button" data-action="open-add-transaction" aria-label="เพิ่มธุรกรรม" title="เพิ่มธุรกรรม" class="tactile-btn breathing w-11 h-11 flex items-center justify-center text-brand-600"><i data-lucide="plus" class="w-5 h-5"></i></button>
+        <button type="button" data-action="switch-view" data-view="reminders" aria-label="แจ้งเตือน" title="แจ้งเตือน" class="nav-btn p-2 rounded-xl text-[var(--text-secondary)]"><i data-lucide="bell" class="w-5 h-5"></i></button>
       </nav>
 
-      <!-- Glass Badge: บังคับทุกแอปตาม layout-and-brand.md -->
-      <div class="glass badge-glow fixed bottom-20 md:bottom-5 right-4 z-30 px-3 py-1.5 text-xs select-none">
-        by Supasit.A
+      <!-- A(i)CODER badge: พื้นหลังคงที่สีอ่อนเสมอ ไม่ตามธีมแอป (D1 ต้องอยู่บนพื้นสว่างเท่านั้น ตาม branding/README.md) -->
+      <div class="aicoder-badge-strip md:hidden fixed bottom-0 inset-x-0 z-20 h-14 flex items-center justify-center">
+        <img src="/aicoder-badge.svg" alt="A(i)CODER" class="h-8 w-auto" />
+      </div>
+      <div class="aicoder-badge-strip hidden md:flex fixed bottom-5 right-4 z-30 h-12 items-center justify-center px-3 rounded-xl">
+        <img src="/aicoder-badge.svg" alt="A(i)CODER" class="h-6 w-auto" />
       </div>
     </div>
 

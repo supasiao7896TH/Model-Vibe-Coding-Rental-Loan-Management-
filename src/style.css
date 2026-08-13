@@ -1,86 +1,91 @@
-/* Neo-Glassmorphism design tokens — ดู C:\Users\PC 4000D\.claude\skills\vibe-coding-core\references\design-system.md
-   Tailwind CDN คุม layout/spacing ผ่าน utility class ใน template string อยู่แล้ว
-   ไฟล์นี้เก็บเฉพาะสิ่งที่ Tailwind utility ทำเองไม่ได้: CSS variables, .glass, .glow-*, micro-interactions
-
-   หมายเหตุ: doc ต้นฉบับใช้ [data-theme="light"] เป็นตัวสลับธีม แต่แอปนี้สลับด้วย class .dark บน <html>
-   (ผ่าน tailwind.config = { darkMode: 'class' } ใน public/tailwind-config.js) — ค่าสีเหมือนเดิมทุกตัว
-   แค่กลไกสลับใช้ .dark class แทน attribute */
+/* "Tactile Plant UI" — สังเคราะห์จาก pattern ที่พี่ A เลือกซ้ำเองโดยไม่ได้ตั้งใจ ใน 2 แอปจริง:
+   teal/cyan (Monitor-log-sheet-boardman + Log-EQ-history), สัมผัสนูน-บุ๋มแบบ neumorphism (Log-EQ-history),
+   สีตามความหมายหลากหลาย ไม่ใช่สีเดียวทั้งแอป (ทั้งคู่), gradient-text hero technique (Log-EQ-history)
+   ยังไม่ได้เขียนลง skill vibe-coding-core — รอพี่ A ยืนยันของจริงก่อน */
 
 :root {
-  --bg-page: #f8f8fb;
-  --bg-card: #ffffff;
-  --bg-raised: #f0f0f5;
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-tertiary: #a1a1aa;
-  --border: rgba(0, 0, 0, .08);
-  --brand: #6d28d9;
-  --success: #059669;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --info: #2563eb;
+  --bg-page: #eef2f9;
+  --bg-card: #eef2f9;
+  --text-primary: #334155;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --shadow-light: #ffffff;
+  --shadow-dark: #d1d9e6;
 }
 
 .dark {
-  --bg-page: #0f0f12;
-  --bg-card: #1a1a1f;
-  --bg-raised: #242429;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #52525b;
-  --border: rgba(255, 255, 255, .08);
-  --brand: #7c3aed;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --info: #60a5fa;
+  --bg-page: #131b2c;
+  --bg-card: #131b2c;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --shadow-light: #1c2740;
+  --shadow-dark: #0a0f1a;
 }
 
-/* DS-5 · Neo-Glassmorphism */
-.glass {
-  background: rgba(255, 255, 255, .70);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border);
+/* นูนออกจากพื้นผิว — การ์ดหลัก */
+.tactile {
+  background: var(--bg-card);
   border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, .08), 0 4px 8px rgba(0, 0, 0, .04);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+  transition: box-shadow .25s ease, transform .25s ease;
 }
-.dark .glass {
-  background: rgba(19, 19, 22, .70);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, .15), 0 4px 8px rgba(0, 0, 0, .08);
-}
-.glass:hover {
-  transform: scale(1.02);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, .12), 0 4px 8px rgba(0, 0, 0, .06);
-}
-.dark .glass:hover {
-  box-shadow: 0 16px 48px rgba(0, 0, 0, .2), 0 4px 8px rgba(0, 0, 0, .1);
+.tactile:hover {
+  box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
 }
 
-/* DS-6 · Status Glow */
-.glow-online { box-shadow: 0 0 0 3px rgba(5, 150, 105, .35); }
-.glow-offline { box-shadow: 0 0 0 3px rgba(217, 119, 6, .35); }
-.glow-syncing { animation: pulse-blue 2s infinite; }
-@keyframes pulse-blue {
-  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, .15); }
+/* นูนเบากว่า — การ์ดย่อย/แถวรายการ */
+.tactile-sm {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
 }
 
-/* Glass Badge — brand-color glow on hover */
-.badge-glow:hover {
-  box-shadow: 0 4px 20px color-mix(in srgb, var(--brand) 40%, transparent);
+/* บุ๋มเข้าไปในพื้นผิว — ช่อง input/select */
+.tactile-inset {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
 }
 
-/* Micro-interactions (บังคับตาม layout-and-brand.md) */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ปุ่มกดได้จริง — นูนตอนปกติ, บุ๋มตอนกด (:active) */
+.tactile-btn {
+  background: var(--bg-card);
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  transition: box-shadow .15s ease;
 }
-.enter { animation: fadeInUp 300ms ease both; }
+.tactile-btn:hover { box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); }
+.tactile-btn:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
 
-.btn-press {
-  transition: transform 200ms ease;
+/* Hero gradient-text — เทคนิคจาก Log-EQ-history แต่เปลี่ยนสีเป็น teal→cyan (ของพี่ A จริง ไม่ใช่ indigo แบบ AI Studio) */
+.gradient-text {
+  background-image: linear-gradient(to right, #0d9488, #0891b2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.btn-press:active {
-  transform: scale(.97);
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.breathing { animation: breathe 4s ease-in-out infinite; }
+
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .4); }
+  70% { box-shadow: 0 0 0 5px rgba(244, 63, 94, 0); }
+}
+.pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fadeIn .3s ease-out forwards; }
+.animate-slide-up { animation: slideUp .3s ease-out forwards; }
+
+/* A(i)CODER badge strip — พื้นหลังคงที่สีอ่อนเสมอ ไม่ตามธีมแอป
+   (กติกาจาก branding/README.md: D1 ต้องอยู่บนพื้นที่สว่างกว่า #E8E4F2 เท่านั้น ห้ามวางบนพื้นมืด) */
+.aicoder-badge-strip {
+  background: #F7F5FB;
+  border-top: 1px solid #E5E7EB;
 }
