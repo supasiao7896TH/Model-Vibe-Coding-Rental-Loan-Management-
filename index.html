@@ -20,45 +20,47 @@
     <script src="/tailwind-config.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&family=Fraunces:wght@600;700&display=swap" rel="stylesheet" />
   </head>
-  <body class="min-h-screen font-['Noto_Sans_Thai'] bg-[var(--paper)] text-[var(--text-primary)] dark:bg-[var(--panel-ink)]">
+  <body class="min-h-screen font-['Noto_Sans_Thai'] bg-[var(--bg-page)] text-[var(--text-primary)]">
     <div class="flex min-h-screen md:flex-row flex-col">
 
-      <!-- Sidebar: เห็นเฉพาะจอ >= md (PC/Desktop) — ริมซ้ายมี Gauge Rail (ลายเซ็นแบรนด์) -->
-      <aside class="hidden md:flex md:flex-col md:w-20 md:items-center md:py-6 md:gap-6 border-r border-[var(--border)] bg-[var(--paper-card)] dark:bg-[var(--panel-surface)] relative">
-        <div class="gauge-rail-vertical absolute left-0 top-0 bottom-0 w-2"></div>
+      <!-- Sidebar: เห็นเฉพาะจอ >= md (PC/Desktop) -->
+      <aside class="hidden md:flex md:flex-col md:w-20 md:items-center md:py-6 md:gap-6 glass md:!rounded-none border-r border-[var(--border)]">
         <span class="text-2xl">🏠</span>
         <nav class="flex flex-col gap-4" id="sidebarNav">
-          <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[6px] hover:bg-[var(--panel-raised)] hover:text-[var(--brass)] transition-colors" aria-label="Dashboard">📊</button>
-          <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[6px] hover:bg-[var(--panel-raised)] hover:text-[var(--brass)] transition-colors" aria-label="ห้องพัก">🏘️</button>
-          <button type="button" data-action="switch-view" data-view="transactions" class="text-xl p-2 rounded-[6px] hover:bg-[var(--panel-raised)] hover:text-[var(--brass)] transition-colors" aria-label="ธุรกรรม">📋</button>
-          <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[6px] hover:bg-[var(--panel-raised)] hover:text-[var(--brass)] transition-colors" aria-label="แจ้งเตือน">🔔</button>
+          <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="Dashboard">📊</button>
+          <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="ห้องพัก">🏘️</button>
+          <button type="button" data-action="switch-view" data-view="transactions" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="ธุรกรรม">📋</button>
+          <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[10px] hover:bg-[var(--bg-raised)] hover:text-[var(--brand)] transition-colors" aria-label="แจ้งเตือน">🔔</button>
         </nav>
       </aside>
 
       <div class="flex-1 flex flex-col">
-        <!-- Header: Fraunces ใช้ที่นี่จุดเดียวของทั้งแอป (ตาม Control Room typography rule) -->
-        <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--paper-card)] dark:bg-[var(--panel-surface)]">
+        <!-- Header: Glass sticky + Fraunces (hero) + Status Indicator -->
+        <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 glass md:!rounded-none border-b border-[var(--border)]">
           <h1 class="font-['Fraunces'] font-semibold text-lg">🏠 คอนโด 4 ห้อง</h1>
-          <button type="button" data-action="toggle-theme" id="themeToggleBtn" aria-label="สลับโหมดมืด/สว่าง" class="text-xl">🌙</button>
+          <div class="flex items-center gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-[var(--success)] glow-online" title="พร้อมใช้งาน (ข้อมูลอยู่ในเครื่อง)" aria-label="สถานะ: พร้อมใช้งาน"></span>
+            <button type="button" data-action="toggle-theme" id="themeToggleBtn" aria-label="สลับโหมดมืด/สว่าง" class="text-xl btn-press">🌙</button>
+          </div>
         </header>
 
         <!-- View container: JS จะ render เนื้อหาของแต่ละหน้าลงตรงนี้ -->
         <main id="viewContainer" class="flex-1 p-4 pb-24 md:pb-6 max-w-3xl w-full mx-auto"></main>
       </div>
 
-      <!-- Bottom nav: เห็นเฉพาะจอ < md (Mobile) — เส้นบนเป็น Gauge Rail แนวนอน -->
-      <nav class="md:hidden gauge-rail-horizontal fixed bottom-0 inset-x-0 z-20 flex justify-around items-center py-2 border-t border-[var(--border)] bg-[var(--paper-card)] dark:bg-[var(--panel-surface)]">
-        <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[6px] active:text-[var(--brass)]" aria-label="Dashboard">📊</button>
-        <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[6px] active:text-[var(--brass)]" aria-label="ห้องพัก">🏘️</button>
-        <button type="button" data-action="open-add-transaction" class="text-2xl p-2 rounded-[6px] active:text-[var(--brass)]" aria-label="เพิ่มธุรกรรม">➕</button>
-        <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[6px] active:text-[var(--brass)]" aria-label="แจ้งเตือน">🔔</button>
+      <!-- Bottom nav: เห็นเฉพาะจอ < md (Mobile) -->
+      <nav class="md:hidden fixed bottom-0 inset-x-0 z-20 flex justify-around items-center py-2 glass !rounded-none border-t border-[var(--border)]">
+        <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="Dashboard">📊</button>
+        <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="ห้องพัก">🏘️</button>
+        <button type="button" data-action="open-add-transaction" class="text-2xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="เพิ่มธุรกรรม">➕</button>
+        <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-[10px] btn-press active:text-[var(--brand)]" aria-label="แจ้งเตือน">🔔</button>
       </nav>
 
-      <!-- Nameplate Badge: แทนที่ footer text เดิม — ป้ายทองเหลืองมุมขวาล่าง เห็นทุกขนาดจอ -->
-      <div class="nameplate fixed bottom-20 md:bottom-5 right-4 z-30 px-3 py-1.5 text-xs select-none">
-        A-Class WebCraft · by Supasit.A
+      <!-- Glass Badge: บังคับทุกแอปตาม layout-and-brand.md -->
+      <div class="glass badge-glow fixed bottom-20 md:bottom-5 right-4 z-30 px-3 py-1.5 text-xs select-none">
+        by Supasit.A
       </div>
     </div>
 
