@@ -199,17 +199,40 @@ function renderRooms({ rooms, transactions, month }) {
   `;
 }
 
-function renderTransactions({ rooms, transactions }) {
+function filterTransactions(transactions, roomName, filter) {
+  const query = (filter?.query ?? '').trim().toLowerCase();
+  const type = filter?.type ?? 'all';
+
+  return transactions.filter((t) => {
+    if (type !== 'all' && t.type !== type) return false;
+    if (!query) return true;
+    const haystack = `${roomName(t.roomId)} ${t.note ?? ''}`.toLowerCase();
+    return haystack.includes(query);
+  });
+}
+
+function renderTransactions({ rooms, transactions, txFilter }) {
   const roomName = (roomId) => rooms.find((r) => r.id === roomId)?.roomNumber ?? '?';
-  const sorted = [...transactions].sort((a, b) => b.month.localeCompare(a.month));
+  const filtered = filterTransactions(transactions, roomName, txFilter);
+  const sorted = [...filtered].sort((a, b) => b.month.localeCompare(a.month));
+  const filter = txFilter ?? { query: '', type: 'all' };
 
   return `
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold ">ธุรกรรมทั้งหมด</h2>
       <button type="button" data-action="open-add-transaction" class="flex items-center gap-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold px-3 py-2 transition-colors">${icon('plus', 'w-4 h-4')} เพิ่ม</button>
     </div>
+    <div class="flex gap-2 mb-4">
+      <input type="search" data-role="tx-search" value="${escapeHtml(filter.query)}" placeholder="ค้นหา (เลขห้อง/โน้ต)" class="tactile-inset flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+      <select data-role="tx-type-filter" class="tactile-inset px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+        <option value="all" ${filter.type === 'all' ? 'selected' : ''}>ทุกประเภท</option>
+        <option value="rent" ${filter.type === 'rent' ? 'selected' : ''}>ค่าเช่า</option>
+        <option value="loan" ${filter.type === 'loan' ? 'selected' : ''}>ผ่อนธนาคาร</option>
+        <option value="expense" ${filter.type === 'expense' ? 'selected' : ''}>ค่าใช้จ่าย</option>
+      </select>
+    </div>
     ${sorted.length === 0
-      ? '<p class="text-sm text-[var(--text-tertiary)]">ยังไม่มีธุรกรรมเลยค่ะ ลองกด "+ เพิ่ม" ดูนะคะ</p>'
+      ? `<p class="text-sm text-[var(--text-tertiary)]">${transactions.length === 0 ? 'ยังไม่มีธุรกรรมเลยค่ะ ลองกด "+ เพิ่ม" ดูนะคะ' : 'ไม่พบธุรกรรมที่ตรงกับตัวกรองค่ะ'}</p>`
       : `<ul class="space-y-2">${sorted.map((t) => `
           <li class="tactile-sm p-3 flex justify-between items-center text-sm animate-fade-in">
             <div class="flex items-center gap-2">

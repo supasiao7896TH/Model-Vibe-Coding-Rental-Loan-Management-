@@ -10,6 +10,7 @@ function rerenderCurrentView() {
     rooms: StateStore.get('rooms') ?? [],
     transactions: StateStore.get('transactions') ?? [],
     month: StateStore.get('currentMonth') ?? currentMonthStr(),
+    txFilter: StateStore.get('txFilter') ?? { query: '', type: 'all' },
   });
 }
 
@@ -38,6 +39,7 @@ async function init() {
     UIRenderer.applyTheme(theme);
     StateStore.set('currentMonth', currentMonthStr());
     StateStore.set('currentView', 'dashboard');
+    StateStore.set('txFilter', { query: '', type: 'all' });
 
     const rooms = await seedDefaultRoomsIfEmpty();
     const transactions = await StorageEngine.getAll(AppConfig.STORES.TRANSACTIONS);
@@ -49,6 +51,7 @@ async function init() {
     StateStore.on('rooms', rerenderCurrentView);
     StateStore.on('transactions', rerenderCurrentView);
     StateStore.on('currentView', rerenderCurrentView);
+    StateStore.on('txFilter', rerenderCurrentView);
 
     rerenderCurrentView();
   } catch (err) {
@@ -127,6 +130,31 @@ document.addEventListener('click', (e) => {
   if (action === 'close-modal' && trigger !== e.target) return;
 
   handleAction(action, trigger);
+});
+
+// ช่องค้นหาธุรกรรม: ยิง event 'input' ทุกครั้งที่พิมพ์ ต้องคนละ listener จาก 'click'/'submit' ข้างบน
+// จุดที่ต้องระวัง: StateStore.set() ด้านล่างทำให้ rerenderCurrentView() ยิง innerHTML ใหม่ทั้งก้อน
+// ซึ่งลบ <input> ตัวเดิมทิ้งแล้วสร้างใหม่ — โฟกัส/ตำแหน่ง cursor ที่พี่ A กำลังพิมพ์อยู่จะหายไปทันที
+// ถ้าไม่คืนโฟกัสเอง พี่ A จะพิมพ์ได้แค่ตัวอักษรเดียวแล้วต้องกดช่องค้นหาใหม่ทุกครั้ง
+document.addEventListener('input', (e) => {
+  const role = e.target.dataset.role;
+  if (role !== 'tx-search' && role !== 'tx-type-filter') return;
+
+  const filter = StateStore.get('txFilter') ?? { query: '', type: 'all' };
+  const next = role === 'tx-search'
+    ? { ...filter, query: e.target.value }
+    : { ...filter, type: e.target.value };
+  const cursorPos = e.target.selectionStart;
+
+  StateStore.set('txFilter', next); // ทำให้เกิด re-render ทันที (synchronous)
+
+  const newInput = document.querySelector(`[data-role="${role}"]`);
+  if (newInput) {
+    newInput.focus();
+    if (typeof cursorPos === 'number' && newInput.setSelectionRange) {
+      newInput.setSelectionRange(cursorPos, cursorPos);
+    }
+  }
 });
 
 document.addEventListener('submit', async (e) => {
