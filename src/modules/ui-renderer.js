@@ -99,12 +99,13 @@ function isPaidThisMonth(monthTx, roomId, type) {
 }
 
 // การ์ดสรุปตัวเลขแบบ KPI tile — tactile (นูนจากพื้นผิว) + เส้นขอบบนสี (แก้จุดอ่อน contrast ต่ำของ neumorphism ล้วนๆ) + ไอคอนชิป
-function kpiTile({ label, value, iconName, accent }) {
+// class="kpi-value" + data-target="ตัวเลขดิบ" ไว้ให้ animateKpiNumbers() อ่านไปนับขึ้นทีหลัง
+function kpiTile({ label, value, rawValue, iconName, accent }) {
   return `
     <div class="tactile rounded-2xl p-5 flex items-center justify-between border-t-4 ${accent.border} animate-slide-up">
       <div>
         <p class="text-xs text-[var(--text-secondary)] font-medium">${label}</p>
-        <p class="text-2xl font-black mt-1 ${accent.text}">${value}</p>
+        <p class="text-2xl font-black mt-1 ${accent.text} kpi-value" data-target="${rawValue}">${value}</p>
       </div>
       <div class="tactile-btn w-11 h-11 ${accent.text} flex items-center justify-center shrink-0">
         ${icon(iconName, 'w-5 h-5')}
@@ -141,10 +142,10 @@ function renderDashboard({ rooms, transactions, month }) {
   return `
     <h2 class="text-lg font-bold mb-4 ">สรุปเดือน ${monthLabel(month)}</h2>
     <div class="grid grid-cols-2 gap-3 mb-6">
-      ${kpiTile({ label: 'รายรับ (ค่าเช่า)', value: formatCurrency(totalRent), iconName: 'home', accent: { border: 'border-t-blue-500', text: 'text-blue-600', chipBg: 'bg-blue-50' } })}
-      ${kpiTile({ label: 'ผ่อนธนาคาร', value: formatCurrency(totalLoan), iconName: 'landmark', accent: { border: 'border-t-purple-500', text: 'text-purple-600', chipBg: 'bg-purple-50' } })}
-      ${kpiTile({ label: 'ค่าใช้จ่าย', value: formatCurrency(totalExpense), iconName: 'wrench', accent: { border: 'border-t-amber-500', text: 'text-amber-600', chipBg: 'bg-amber-50' } })}
-      ${kpiTile({ label: 'กำไรสุทธิ', value: formatCurrency(net), iconName: 'trending-up', accent: netAccent })}
+      ${kpiTile({ label: 'รายรับ (ค่าเช่า)', value: formatCurrency(totalRent), rawValue: totalRent, iconName: 'home', accent: { border: 'border-t-blue-500', text: 'text-blue-600', chipBg: 'bg-blue-50' } })}
+      ${kpiTile({ label: 'ผ่อนธนาคาร', value: formatCurrency(totalLoan), rawValue: totalLoan, iconName: 'landmark', accent: { border: 'border-t-purple-500', text: 'text-purple-600', chipBg: 'bg-purple-50' } })}
+      ${kpiTile({ label: 'ค่าใช้จ่าย', value: formatCurrency(totalExpense), rawValue: totalExpense, iconName: 'wrench', accent: { border: 'border-t-amber-500', text: 'text-amber-600', chipBg: 'bg-amber-50' } })}
+      ${kpiTile({ label: 'กำไรสุทธิ', value: formatCurrency(net), rawValue: net, iconName: 'trending-up', accent: netAccent })}
     </div>
 
     <div class="tactile p-4 mb-6">
@@ -400,7 +401,32 @@ export const UIRenderer = {
 
     if (viewName === 'dashboard') {
       this.renderTrendChart(data.transactions, data.month);
+      this.animateKpiNumbers();
     }
+  },
+
+  // นับตัวเลข KPI ขึ้นจาก 0 ตอนโหลดหน้า — เคารพ prefers-reduced-motion (คนที่ตั้งค่าลดแอนิเมชันไว้
+  // จะเห็นตัวเลขสุดท้ายทันที ไม่ต้องรอนับ) เหมือนกติกาเดียวกับ SVG badge A(i)CODER
+  animateKpiNumbers() {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = 600;
+
+    document.querySelectorAll('.kpi-value').forEach((el) => {
+      const target = Number(el.dataset.target) || 0;
+      if (reduceMotion) {
+        el.textContent = formatCurrency(target);
+        return;
+      }
+
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - (1 - progress) ** 3; // ease-out cubic — เริ่มเร็ว ค่อยๆ ชะลอตอนใกล้ถึงเป้า
+        el.textContent = formatCurrency(Math.round(target * eased));
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
   },
 
   renderTrendChart(transactions, month) {
