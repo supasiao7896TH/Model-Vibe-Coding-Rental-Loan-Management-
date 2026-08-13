@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' https://cdn.tailwindcss.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src https://fonts.gstatic.com;
+      img-src 'self' data:;
+      connect-src 'self';
+      frame-ancestors 'none';
+    ">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>คอนโด 4 ห้อง | by Supasit.A</title>
+
+    <!-- Tailwind CDN: เร็ว ไม่ต้อง build แยก แลกกับ style-src ต้องเปิด 'unsafe-inline' (ดู comment ใน CSP ด้านบน) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/tailwind-config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-['Noto_Sans_Thai']">
+    <div class="flex min-h-screen md:flex-row flex-col">
+
+      <!-- Sidebar: เห็นเฉพาะจอ >= md (PC/Desktop) -->
+      <aside class="hidden md:flex md:flex-col md:w-20 md:items-center md:py-6 md:gap-6 border-r border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur">
+        <span class="text-2xl">🏠</span>
+        <nav class="flex flex-col gap-4" id="sidebarNav">
+          <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="Dashboard">📊</button>
+          <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="ห้องพัก">🏘️</button>
+          <button type="button" data-action="switch-view" data-view="transactions" class="text-xl p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="ธุรกรรม">📋</button>
+          <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="แจ้งเตือน">🔔</button>
+        </nav>
+      </aside>
+
+      <div class="flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur">
+          <h1 class="font-['Fraunces'] font-semibold text-lg">🏠 คอนโด 4 ห้อง</h1>
+          <button type="button" data-action="toggle-theme" id="themeToggleBtn" aria-label="สลับโหมดมืด/สว่าง" class="text-xl">🌙</button>
+        </header>
+
+        <!-- View container: JS จะ render เนื้อหาของแต่ละหน้าลงตรงนี้ -->
+        <main id="viewContainer" class="flex-1 p-4 pb-24 md:pb-6 max-w-3xl w-full mx-auto"></main>
+
+        <footer class="hidden md:block text-center text-xs text-slate-400 py-4">
+          A-Class WebCraft · Code • Share • Inspire · by Supasit.A
+        </footer>
+      </div>
+
+      <!-- Bottom nav: เห็นเฉพาะจอ < md (Mobile) -->
+      <nav class="md:hidden fixed bottom-0 inset-x-0 z-20 flex justify-around items-center py-2 border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 backdrop-blur">
+        <button type="button" data-action="switch-view" data-view="dashboard" class="text-xl p-2 rounded-xl active:bg-slate-200 dark:active:bg-slate-700" aria-label="Dashboard">📊</button>
+        <button type="button" data-action="switch-view" data-view="rooms" class="text-xl p-2 rounded-xl active:bg-slate-200 dark:active:bg-slate-700" aria-label="ห้องพัก">🏘️</button>
+        <button type="button" data-action="open-add-transaction" class="text-2xl p-2 rounded-xl active:bg-slate-200 dark:active:bg-slate-700" aria-label="เพิ่มธุรกรรม">➕</button>
+        <button type="button" data-action="switch-view" data-view="reminders" class="text-xl p-2 rounded-xl active:bg-slate-200 dark:active:bg-slate-700" aria-label="แจ้งเตือน">🔔</button>
+      </nav>
+    </div>
+
+    <!-- Modal และ Toast จะถูก inject เข้ามาตรงนี้โดย UI_RENDERER -->
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
