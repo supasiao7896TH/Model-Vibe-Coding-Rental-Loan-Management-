@@ -1,5 +1,5 @@
 // bump CACHE_NAME ทุกครั้งที่แก้โค้ด (ไม่งั้นเบราว์เซอร์จะเสิร์ฟไฟล์เก่าจาก cache ต่อไปเรื่อยๆ)
-const CACHE_NAME = 'condo-rental-v1';
+const CACHE_NAME = 'condo-rental-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
