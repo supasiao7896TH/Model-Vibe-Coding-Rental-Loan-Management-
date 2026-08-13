@@ -27,6 +27,11 @@ function _openDB() {
         txStore.createIndex('roomId', 'roomId', { unique: false });
         txStore.createIndex('month', 'month', { unique: false });
       }
+
+      if (!db.objectStoreNames.contains(AppConfig.STORES.DOCUMENTS)) {
+        const docStore = db.createObjectStore(AppConfig.STORES.DOCUMENTS, { keyPath: 'id' });
+        docStore.createIndex('roomId', 'roomId', { unique: false });
+      }
     };
 
     request.onsuccess = (event) => {
@@ -90,6 +95,16 @@ export const StorageEngine = {
     return new Promise((resolve, reject) => {
       const request = store.index(indexName).getAll(value);
       request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  // ล้างข้อมูลทั้ง store — ใช้ตอน Import DB (ทับของเดิม) และ Reset ข้อมูลทั้งหมด
+  async clear(storeName) {
+    const store = await _getStore(storeName, 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
   },

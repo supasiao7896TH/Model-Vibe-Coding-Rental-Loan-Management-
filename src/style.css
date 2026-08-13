@@ -89,3 +89,12 @@
   background: #F7F5FB;
   border-top: 1px solid #E5E7EB;
 }
+
+/* #printArea ว่างเปล่าตลอดจนกว่าจะสั่งพิมพ์ใบแจ้งหนี้/รายงานภาษี (UIRenderer.printInvoice/printTaxReport
+   เติม HTML เข้าไปก่อนเรียก window.print()) ซ่อนไว้บนหน้าจอปกติเสมอ */
+#printArea { display: none; }
+
+@media print {
+  body > *:not(#printArea) { display: none !important; }
+  #printArea { display: block !important; }
+}
