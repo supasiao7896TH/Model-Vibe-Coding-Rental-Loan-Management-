@@ -249,6 +249,16 @@ function renderDashboard({ rooms, transactions, month }) {
   `;
 }
 
+function quickActionButton({ enabled, paid, action, id, paidLabel, actionLabel, iconName, toneClass }) {
+  if (!enabled) {
+    return `<button type="button" class="tactile-btn h-9 text-xs font-bold text-slate-300 cursor-not-allowed" disabled>-</button>`;
+  }
+  if (paid) {
+    return `<button type="button" class="tactile-btn h-9 text-xs font-bold ${toneClass} cursor-not-allowed flex items-center justify-center gap-1" disabled>${icon('check', 'w-3.5 h-3.5')} ${paidLabel}</button>`;
+  }
+  return `<button type="button" data-action="${action}" data-id="${id}" class="tactile-btn h-9 text-xs font-bold ${toneClass} flex items-center justify-center gap-1">${icon(iconName, 'w-3.5 h-3.5')} ${actionLabel}</button>`;
+}
+
 function roomCardHtml(room, monthTx) {
   const rentPaid = monthTx.some((t) => t.roomId === room.id && t.type === 'rent' && t.status === 'paid');
   const loanPaid = monthTx.some((t) => t.roomId === room.id && t.type === 'loan' && t.status === 'paid');
@@ -275,6 +285,10 @@ function roomCardHtml(room, monthTx) {
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${loanPaid ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}"></span>ผ่อน ${formatCurrency(room.loanMonthlyPayment)}</span>
       </div>
       ${currentBalance !== null ? `<p class="text-[11px] font-bold text-purple-500 mb-3">ยอดหนี้คงเหลือ ~${formatCurrency(currentBalance)}</p>` : ''}
+      <div class="grid grid-cols-2 gap-1.5 mb-1.5">
+        ${quickActionButton({ enabled: room.loanMonthlyPayment > 0, paid: loanPaid, action: 'open-quick-pay-loan', id: room.id, paidLabel: 'จ่ายแล้ว', actionLabel: 'จ่ายค่างวด', iconName: 'landmark', toneClass: 'text-purple-600' })}
+        ${quickActionButton({ enabled: occupied, paid: rentPaid, action: 'open-quick-pay-rent', id: room.id, paidLabel: 'รับแล้ว', actionLabel: 'เก็บค่าเช่า', iconName: 'wallet', toneClass: 'text-blue-600' })}
+      </div>
       <div class="grid grid-cols-4 gap-1.5 pt-2 border-t border-black/5 dark:border-white/5">
         <button type="button" data-action="open-doc-vault" data-id="${room.id}" title="คลังเอกสาร" class="tactile-btn h-9 flex items-center justify-center text-amber-600">${icon('folder', 'w-4 h-4')}</button>
         <button type="button" data-action="open-tenant-history" data-id="${room.id}" title="ประวัติผู้เช่า" class="tactile-btn h-9 flex items-center justify-center text-slate-500">${icon('history', 'w-4 h-4')}</button>
@@ -584,16 +598,20 @@ function transactionFormHtml(rooms, transaction) {
   `;
 }
 
-function confirmDeleteHtml(message, confirmAction, confirmId) {
+function confirmActionHtml(message, confirmAction, confirmId, { label = 'ยืนยัน', toneClass = 'text-red-600' } = {}) {
   return `
     <div class="space-y-4">
       <p>${escapeHtml(message)}</p>
       <div class="flex gap-2">
-        <button type="button" data-action="${confirmAction}" data-id="${confirmId ?? ''}" class="tactile-btn flex-1 text-red-600 py-2 font-bold">ลบ</button>
+        <button type="button" data-action="${confirmAction}" data-id="${confirmId ?? ''}" class="tactile-btn flex-1 ${toneClass} py-2 font-bold">${label}</button>
         <button type="button" data-action="close-modal" class="${BTN_SECONDARY}">ยกเลิก</button>
       </div>
     </div>
   `;
+}
+
+function confirmDeleteHtml(message, confirmAction, confirmId) {
+  return confirmActionHtml(message, confirmAction, confirmId, { label: 'ลบ', toneClass: 'text-red-600' });
 }
 
 function moveOutFormHtml(room) {
@@ -918,6 +936,10 @@ export const UIRenderer = {
 
   openDeleteConfirm(message, action, id) {
     this.openModal(confirmDeleteHtml(message, action, id));
+  },
+
+  openConfirm(message, action, id, opts) {
+    this.openModal(confirmActionHtml(message, action, id, opts));
   },
 
   openMoveOutForm(room) {
