@@ -3,15 +3,21 @@ import { AppConfig } from './modules/app-config.js';
 import { StorageEngine } from './modules/storage-engine.js';
 import { StateStore } from './modules/state-store.js';
 import { DebugModule } from './modules/debug-module.js';
-import { UIRenderer, currentMonthStr, formatCurrency } from './modules/ui-renderer.js';
+import { UIRenderer, currentMonthStr, formatCurrency, shiftMonth } from './modules/ui-renderer.js';
 import { upsertMonthlyPayment } from './modules/payment-actions.js';
 
 function rerenderCurrentView() {
   const view = StateStore.get('currentView') ?? 'dashboard';
+  // Dashboard เลื่อนดูเดือนอื่นได้อิสระผ่าน dashboardMonth ส่วนหน้าอื่น (เช่น แจ้งเตือน)
+  // และ action ที่บันทึกรายการ (quick-pay/invoice) ยังอิง currentMonth = เดือนจริงตอนนี้เสมอ
+  // ไม่ให้ปนกัน กันบันทึกรายการผิดเดือนตอนพี่ A เผลอเลื่อน Dashboard ค้างไว้
+  const month = view === 'dashboard'
+    ? (StateStore.get('dashboardMonth') ?? currentMonthStr())
+    : (StateStore.get('currentMonth') ?? currentMonthStr());
   UIRenderer.renderView(view, {
     rooms: StateStore.get('rooms') ?? [],
     transactions: StateStore.get('transactions') ?? [],
-    month: StateStore.get('currentMonth') ?? currentMonthStr(),
+    month,
     txFilter: StateStore.get('txFilter') ?? { query: '', type: 'all' },
   });
   UIRenderer.setActiveNav(view);
@@ -87,6 +93,7 @@ async function init() {
     StateStore.on('transactions', rerenderCurrentView);
     StateStore.on('currentView', rerenderCurrentView);
     StateStore.on('txFilter', rerenderCurrentView);
+    StateStore.on('dashboardMonth', rerenderCurrentView);
 
     rerenderCurrentView();
   } catch (err) {
@@ -103,6 +110,18 @@ async function handleAction(action, trigger) {
   switch (action) {
     case 'switch-view':
       StateStore.set('currentView', trigger.dataset.view);
+      break;
+
+    case 'dashboard-prev-month':
+      StateStore.set('dashboardMonth', shiftMonth(StateStore.get('dashboardMonth') ?? currentMonthStr(), -1));
+      break;
+
+    case 'dashboard-next-month':
+      StateStore.set('dashboardMonth', shiftMonth(StateStore.get('dashboardMonth') ?? currentMonthStr(), 1));
+      break;
+
+    case 'dashboard-reset-month':
+      StateStore.set('dashboardMonth', currentMonthStr());
       break;
 
     case 'toggle-theme': {
@@ -417,6 +436,11 @@ document.addEventListener('change', async (e) => {
   if (role === 'tx-form-type') {
     const wrap = document.querySelector('[data-role="tx-form-category-wrap"]');
     if (wrap) wrap.style.display = e.target.value === 'expense' ? '' : 'none';
+    return;
+  }
+
+  if (role === 'dashboard-month-picker') {
+    StateStore.set('dashboardMonth', e.target.value);
     return;
   }
 
