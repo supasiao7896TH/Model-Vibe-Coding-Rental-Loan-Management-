@@ -7,12 +7,14 @@ import { UIRenderer, currentMonthStr, formatCurrency } from './modules/ui-render
 import { upsertMonthlyPayment } from './modules/payment-actions.js';
 
 function rerenderCurrentView() {
-  UIRenderer.renderView(StateStore.get('currentView') ?? 'dashboard', {
+  const view = StateStore.get('currentView') ?? 'dashboard';
+  UIRenderer.renderView(view, {
     rooms: StateStore.get('rooms') ?? [],
     transactions: StateStore.get('transactions') ?? [],
     month: StateStore.get('currentMonth') ?? currentMonthStr(),
     txFilter: StateStore.get('txFilter') ?? { query: '', type: 'all' },
   });
+  UIRenderer.setActiveNav(view);
 }
 
 async function seedDefaultRoomsIfEmpty() {
