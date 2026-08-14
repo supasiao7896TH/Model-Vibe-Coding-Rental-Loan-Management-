@@ -1010,4 +1010,13 @@ export const UIRenderer = {
       lucide.createIcons();
     }
   },
+
+  setActiveNav(view) {
+    document.querySelectorAll('.nav-btn[data-view]').forEach((btn) => {
+      const isActive = btn.dataset.view === view;
+      btn.classList.toggle('active', isActive);
+      if (isActive) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
+    });
+  },
 };
