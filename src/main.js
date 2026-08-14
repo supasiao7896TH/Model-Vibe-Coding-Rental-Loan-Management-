@@ -614,6 +614,7 @@ document.addEventListener('submit', async (e) => {
         ? transactions.map((t) => (t.id === id ? record : t))
         : [...transactions, record];
       StateStore.set('transactions', nextList);
+      StateStore.set('currentView', 'transactions'); // พาไปหน้ารายการทันที จะได้เห็น/ลบได้ถ้าบันทึกผิด
       UIRenderer.closeModal();
       UIRenderer.showToast('บันทึกธุรกรรมแล้วค่ะ', 'success');
     } catch (err) {
