@@ -21,6 +21,11 @@ export function monthLabel(monthStr) {
   return `${THAI_MONTHS[month - 1]} ${year + 543}`;
 }
 
+export function shiftMonth(monthStr, delta) {
+  const [year, month] = monthStr.split('-').map(Number);
+  return currentMonthStr(new Date(year, month - 1 + delta, 1));
+}
+
 export function formatCurrency(amount) {
   return (amount ?? 0).toLocaleString('th-TH', {
     style: 'currency',
@@ -165,7 +170,11 @@ function renderDashboard({ rooms, transactions, month }) {
   const occupancy = occupancyStats(rooms);
   const collection = rentCollectionStats(rooms, monthTx);
 
-  const dueList = rooms
+  // "ใกล้ครบกำหนด"/"สัญญาใกล้หมดอายุ" อิงวันที่จริงวันนี้เสมอ (ไม่อิงเดือนที่กำลังดู)
+  // จึงมีความหมายเฉพาะตอนดูเดือนปัจจุบันจริงเท่านั้น เดือนอื่นไม่คำนวณ/ไม่แสดง กันสับสน
+  const isCurrentMonth = month === currentMonthStr();
+
+  const dueList = !isCurrentMonth ? [] : rooms
     .flatMap((room) => {
       const items = [];
       if (!isPaidThisMonth(monthTx, room.id, AppConfig.TRANSACTION_TYPE.RENT)) {
@@ -180,12 +189,22 @@ function renderDashboard({ rooms, transactions, month }) {
     })
     .slice(0, 3);
 
-  const contractAlerts = rooms
+  const contractAlerts = !isCurrentMonth ? [] : rooms
     .map((room) => ({ room, daysLeft: contractDaysLeft(room.contractEnd) }))
     .filter((item) => item.daysLeft !== null && item.daysLeft <= AppConfig.CONTRACT_DUE_SOON_DAYS);
 
   return `
-    <h2 class="text-lg font-bold mb-4 ">สรุปเดือน ${monthLabel(month)}</h2>
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <button type="button" data-action="dashboard-prev-month" class="tactile-btn w-8 h-8 flex items-center justify-center text-[var(--text-secondary)]" aria-label="เดือนก่อนหน้า">${icon('chevron-left', 'w-4 h-4')}</button>
+        <label class="relative inline-flex items-center">
+          <h2 class="text-lg font-bold cursor-pointer">สรุปเดือน ${monthLabel(month)}</h2>
+          <input type="month" value="${month}" data-role="dashboard-month-picker" class="absolute inset-0 opacity-0 cursor-pointer" aria-label="เลือกเดือน" />
+        </label>
+        <button type="button" data-action="dashboard-next-month" class="tactile-btn w-8 h-8 flex items-center justify-center text-[var(--text-secondary)]" aria-label="เดือนถัดไป">${icon('chevron-right', 'w-4 h-4')}</button>
+      </div>
+      ${!isCurrentMonth ? `<button type="button" data-action="dashboard-reset-month" class="text-xs font-bold text-brand-600">กลับเดือนนี้</button>` : ''}
+    </div>
     <div class="grid grid-cols-2 gap-3 mb-6">
       ${kpiTile({ label: 'รายรับ (ค่าเช่า)', value: formatCurrency(totalRent), rawValue: totalRent, iconName: 'home', accent: { border: 'border-t-blue-500', text: 'text-blue-600', chipBg: 'bg-blue-50' } })}
       ${kpiTile({ label: 'ผ่อนธนาคาร', value: formatCurrency(totalLoan), rawValue: totalLoan, iconName: 'landmark', accent: { border: 'border-t-purple-500', text: 'text-purple-600', chipBg: 'bg-purple-50' } })}
@@ -222,6 +241,7 @@ function renderDashboard({ rooms, transactions, month }) {
       </div>
     </div>
 
+    ${!isCurrentMonth ? '' : `
     ${contractAlerts.length > 0 ? `
     <h3 class="text-sm font-bold mb-2 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">${icon('file-warning', 'w-4 h-4 text-red-500')} สัญญาใกล้หมดอายุ</h3>
     <ul class="space-y-2 mb-6">
@@ -246,6 +266,7 @@ function renderDashboard({ rooms, transactions, month }) {
             </span>
           </li>`;
         }).join('')}</ul>`}
+    `}
   `;
 }
 
