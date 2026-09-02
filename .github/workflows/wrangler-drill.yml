@@ -1,13 +1,12 @@
 name: Wrangler Drill Helper
 
 # ไฟล์ชั่วคราวสำหรับซ้อม rollback (2026-09-02) — ลบทิ้งได้หลังซ้อมเสร็จ
-# ใช้ push trigger แทน workflow_dispatch เพราะ session นี้ไม่มีสิทธิ์ dispatch ผ่าน API
 on:
   push:
     branches: [claude/rollback-drill]
 
 jobs:
-  probe:
+  rollback:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,33 +15,15 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: wrangler --version
+      - name: wrangler rollback ไปเวอร์ชันดีล่าสุดก่อนซ้อม
         env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
         run: |
-          echo "::group::wrangler --version"
-          npx wrangler --version
+          echo "::group::wrangler rollback"
+          npx wrangler rollback 1a50d5ff-cf55-4d3c-b16f-4d137b1aed3b -y -m "rollback drill 2026-09-02"
           echo "::endgroup::"
-      - name: wrangler deployments --help
+      - name: ยืนยันสถานะหลัง rollback
         env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
         run: |
-          echo "::group::wrangler deployments --help"
-          npx wrangler deployments --help
-          echo "::endgroup::"
-      - name: wrangler rollback --help
-        env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
-        run: |
-          echo "::group::wrangler rollback --help"
-          npx wrangler rollback --help
-          echo "::endgroup::"
-      - name: wrangler versions --help
-        env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
-        run: |
-          echo "::group::wrangler versions --help"
-          npx wrangler versions --help
-          echo "::endgroup::"
-      - name: wrangler deployments list (จริง)
-        env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
-        run: |
-          echo "::group::wrangler deployments list"
+          echo "::group::wrangler deployments list (หลัง rollback)"
           npx wrangler deployments list
           echo "::endgroup::"
